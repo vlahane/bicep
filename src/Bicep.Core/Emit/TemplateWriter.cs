@@ -108,33 +108,36 @@ namespace Bicep.Core.Emit
         {
             // TODO: since we merely return a JToken, refactor the emitter logic to add properties to a JObject
             // instead of writing to a JsonWriter and converting it to JToken at the end
-            using var stringWriter = new StringWriter();
-            using var jsonWriter = new JsonTextWriter(stringWriter);
-            var emitter = new ExpressionEmitter(jsonWriter, this.context);
+            using var memoryStream = new MemoryStream();
+            using (var streamWriter = new StreamWriter(memoryStream, TemplateEmitter.UTF8EncodingWithoutBom, 4096, true))
+            using (var jsonWriter = new JsonTextWriter(streamWriter))
+            {
+                var emitter = new ExpressionEmitter(jsonWriter, this.context);
 
-            jsonWriter.WriteStartObject();
+                jsonWriter.WriteStartObject();
 
-            emitter.EmitProperty("$schema", GetSchema(context.SemanticModel.TargetScope));
+                emitter.EmitProperty("$schema", GetSchema(context.SemanticModel.TargetScope));
 
-            emitter.EmitProperty("contentVersion", "1.0.0.0");
-            
-            this.EmitMetadata(jsonWriter, emitter);
+                emitter.EmitProperty("contentVersion", "1.0.0.0");
+                
+                this.EmitMetadata(jsonWriter, emitter);
 
-            this.EmitParametersIfPresent(jsonWriter, emitter);
+                this.EmitParametersIfPresent(jsonWriter, emitter);
 
-            jsonWriter.WritePropertyName("functions");
-            jsonWriter.WriteStartArray();
-            jsonWriter.WriteEndArray();
+                jsonWriter.WritePropertyName("functions");
+                jsonWriter.WriteStartArray();
+                jsonWriter.WriteEndArray();
 
-            this.EmitVariablesIfPresent(jsonWriter, emitter);
+                this.EmitVariablesIfPresent(jsonWriter, emitter);
 
-            this.EmitResources(jsonWriter, emitter);
+                this.EmitResources(jsonWriter, emitter);
 
-            this.EmitOutputsIfPresent(jsonWriter, emitter);
+                this.EmitOutputsIfPresent(jsonWriter, emitter);
 
-            jsonWriter.WriteEndObject();
+                jsonWriter.WriteEndObject();
+            }
 
-            var content = stringWriter.ToString();
+            var content = TemplateEmitter.UTF8EncodingWithoutBom.GetString(memoryStream.ToArray());
             return (Template.FromJson<Template>(content), content.FromJson<JToken>());
         }
 
