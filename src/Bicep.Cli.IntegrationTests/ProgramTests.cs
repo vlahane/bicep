@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Bicep.Cli.UnitTests;
 using Bicep.Core.Analyzers.Linter.Rules;
 using Bicep.Core.FileSystem;
@@ -139,6 +140,15 @@ namespace Bicep.Cli.IntegrationTests
             File.Exists(compiledFilePath).Should().BeTrue();
 
             var actual = JToken.Parse(File.ReadAllText(compiledFilePath));
+
+            if (dataSet.Name.Contains("LoadFunctions"))
+            {
+                TestContext.WriteLine(string.Format("/////// Expected: {0} /////////\n\n{1}\n\n/////// Actual: {2} /////////\n\n{3}\n\n", 
+                bicepFilePath, 
+                System.Convert.ToBase64String(new UTF8Encoding(false).GetBytes(actual.ToString())),
+                compiledFilePath, 
+                System.Convert.ToBase64String(new UTF8Encoding(false).GetBytes(JToken.Parse(dataSet.Compiled!).ToString()))));
+            }
 
             actual.Should().EqualWithJsonDiffOutput(
                 TestContext, 
