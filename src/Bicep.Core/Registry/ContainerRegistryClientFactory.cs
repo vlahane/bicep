@@ -1,9 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Bicep.Core.Configuration;
+using Azure.Containers.ContainerRegistry.Specialized;
 using Bicep.Core.Registry.Auth;
-using Bicep.Core.RegistryClient;
 using Bicep.Core.Tracing;
 using System;
 
@@ -18,7 +17,7 @@ namespace Bicep.Core.Registry
             this.credentialFactory = credentialFactory;
         }
 
-        public BicepRegistryBlobClient CreateBlobClient(RootConfiguration configuration, Uri registryUri, string repository)
+        public ContainerRegistryBlobClient CreateBlobClient(RootConfiguration configuration, Uri registryUri, string repository)
         {
             var options = new ContainerRegistryClientOptions();
             options.Diagnostics.ApplySharedContainerRegistrySettings();
