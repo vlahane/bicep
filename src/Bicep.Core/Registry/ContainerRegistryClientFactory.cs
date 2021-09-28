@@ -25,6 +25,9 @@ namespace Bicep.Core.Registry
 
             var credential = this.credentialFactory.CreateChain(configuration.Cloud.CredentialPrecedence, configuration.Cloud.ActiveDirectoryAuthorityUri);
 
+            // TODO: Add support for national clouds
+            options.Audience = ContainerRegistryAudience.AzureResourceManagerPublicCloud;
+
             return new(registryUri, credential, repository, options);
         }
     }
