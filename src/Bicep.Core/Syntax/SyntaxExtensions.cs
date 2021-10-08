@@ -29,4 +29,3 @@ namespace Bicep.Core.Syntax
             => LanguageConstants.IdentifierComparer.Equals(identifier.IdentifierName, compareTo);
     }
 }
-
