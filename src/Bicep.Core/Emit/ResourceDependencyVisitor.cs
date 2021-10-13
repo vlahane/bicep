@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using Bicep.Core.DataFlow;
 using Bicep.Core.Extensions;
@@ -126,7 +127,10 @@ namespace Bicep.Core.Emit
                 // recursively visit dependent variables
                 this.Visit(declaredSymbol.DeclaringSyntax);
 
-                dependencies = resourceDependencies[declaredSymbol];
+                if (!resourceDependencies.TryGetValue(declaredSymbol, out dependencies))
+                {
+                    return Enumerable.Empty<ResourceDependency>();
+                }
             }
 
             return dependencies;
@@ -139,12 +143,19 @@ namespace Bicep.Core.Emit
                 return;
             }
 
+            HashSet<ResourceDependency> currentResourceDependencies;
+            if (!this.resourceDependencies.TryGetValue(currentDeclaration, out currentResourceDependencies))
+            {
+                Debug.Fail("currentDeclaration should be guaranteed to be in this.resourceDependencies in VisitResourceDeclarationSyntax");
+                return;
+            }
+
             switch (model.GetSymbolInfo(syntax))
             {
                 case VariableSymbol variableSymbol:
                     var varDependencies = GetResourceDependencies(variableSymbol);
 
-                    resourceDependencies[currentDeclaration].UnionWith(varDependencies);
+                    currentResourceDependencies.UnionWith(varDependencies);
                     return;
 
                 case ResourceSymbol resourceSymbol:
@@ -152,15 +163,15 @@ namespace Bicep.Core.Emit
                     {
                         var existingDependencies = GetResourceDependencies(resourceSymbol);
 
-                        resourceDependencies[currentDeclaration].UnionWith(existingDependencies);
+                        currentResourceDependencies.UnionWith(existingDependencies);
                         return;
                     }
 
-                    resourceDependencies[currentDeclaration].Add(new ResourceDependency(resourceSymbol, GetIndexExpression(syntax, resourceSymbol.IsCollection)));
+                    currentResourceDependencies.Add(new ResourceDependency(resourceSymbol, GetIndexExpression(syntax, resourceSymbol.IsCollection)));
                     return;
 
                 case ModuleSymbol moduleSymbol:
-                    resourceDependencies[currentDeclaration].Add(new ResourceDependency(moduleSymbol, GetIndexExpression(syntax, moduleSymbol.IsCollection)));
+                    currentResourceDependencies.Add(new ResourceDependency(moduleSymbol, GetIndexExpression(syntax, moduleSymbol.IsCollection)));
                     return;
             }
         }
@@ -172,6 +183,13 @@ namespace Bicep.Core.Emit
                 return;
             }
 
+            HashSet<ResourceDependency> currentResourceDependencies;
+            if (!this.resourceDependencies.TryGetValue(currentDeclaration, out currentResourceDependencies))
+            {
+                Debug.Fail("currentDeclaration should be guaranteed to be in this.resourceDependencies in VisitResourceDeclarationSyntax");
+                return;
+            }
+
             switch (model.GetSymbolInfo(syntax))
             {
                 case ResourceSymbol resourceSymbol:
@@ -179,15 +197,15 @@ namespace Bicep.Core.Emit
                     {
                         var existingDependencies = GetResourceDependencies(resourceSymbol);
 
-                        resourceDependencies[currentDeclaration].UnionWith(existingDependencies);
+                        currentResourceDependencies.UnionWith(existingDependencies);
                         return;
                     }
 
-                    resourceDependencies[currentDeclaration].Add(new ResourceDependency(resourceSymbol, GetIndexExpression(syntax, resourceSymbol.IsCollection)));
+                    currentResourceDependencies.Add(new ResourceDependency(resourceSymbol, GetIndexExpression(syntax, resourceSymbol.IsCollection)));
                     return;
 
                 case ModuleSymbol moduleSymbol:
-                    resourceDependencies[currentDeclaration].Add(new ResourceDependency(moduleSymbol, GetIndexExpression(syntax, moduleSymbol.IsCollection)));
+                    currentResourceDependencies.Add(new ResourceDependency(moduleSymbol, GetIndexExpression(syntax, moduleSymbol.IsCollection)));
                     return;
             }
         }

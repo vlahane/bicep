@@ -417,5 +417,51 @@ namespace Bicep.Core.UnitTests.Diagnostics.LinterRuleTests
             }
           );
         }
+
+        [TestMethod]
+        public void TolerantOfSyntaxErrors_1()
+        {
+            CompileAndTest(@"
+              resource resource1 'Microsoft.Network/virtualNetworks/subnets@2021-03-01' existing = {
+                // missing name
+              }
+
+              resource resource2 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+                name: resource1.id
+              }
+            ",
+            OnCompileErrors.Ignore,
+            new string[] {
+            }
+          );
+        }
+
+        [TestMethod]
+        public void TolerantOfSyntaxErrors_2()
+        {
+            CompileAndTest(@"
+              resource aksDefaultPoolSubnet 'Microsoft.Network/virtualNetworks/subnets' existing = {
+                parent: virtualNetwork
+                name: aksDefaultPoolSubnetName
+              }
+
+              resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+                name: guid(aksDefaultPoolSubnet.id, 'Network Contributor')
+                scope: aksDefaultPoolSubnet
+                properties: {
+                  principalId: aksServicePrincipalObjectId
+                  roleDefinitionId: '4d97b98b-1d4f-4787-a291-c67834d212e7'
+                }
+                dependsOn: [
+                  virtualNetwork
+                  userAssignedIdentities
+                ]
+              }
+            ",
+            OnCompileErrors.Ignore,
+            new string[] {
+            }
+          );
+        }
     }
 }
