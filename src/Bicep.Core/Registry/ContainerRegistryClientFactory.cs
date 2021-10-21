@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Containers.ContainerRegistry;
 using Azure.Containers.ContainerRegistry.Specialized;
+using Bicep.Core.Configuration;
 using Bicep.Core.Registry.Auth;
 using Bicep.Core.Tracing;
 using System;
@@ -21,12 +23,11 @@ namespace Bicep.Core.Registry
         {
             var options = new ContainerRegistryClientOptions();
             options.Diagnostics.ApplySharedContainerRegistrySettings();
-            options.AuthenticationScope = configuration.Cloud.AuthenticationScope;
 
+            // TODO: Fix national clouds
+            //options.Audience = ContainerRegistryAudience.AzureResourceManagerPublicCloud;
+            //options.AuthenticationScope = configuration.Cloud.AuthenticationScope;
             var credential = this.credentialFactory.CreateChain(configuration.Cloud.CredentialPrecedence, configuration.Cloud.ActiveDirectoryAuthorityUri);
-
-            // TODO: Add support for national clouds
-            options.Audience = ContainerRegistryAudience.AzureResourceManagerPublicCloud;
 
             return new(registryUri, credential, repository, options);
         }

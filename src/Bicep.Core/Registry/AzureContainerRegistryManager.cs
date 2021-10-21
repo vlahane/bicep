@@ -78,7 +78,8 @@ namespace Bicep.Core.Registry
             Response<DownloadManifestResult> manifestResponse;
             try
             {
-                manifestResponse = await client.DownloadManifestAsync(moduleReference.Tag);
+                var options = new DownloadManifestOptions(moduleReference.Tag);
+                manifestResponse = await client.DownloadManifestAsync(options);
             }
             catch(RequestFailedException exception) when (exception.Status == 404)
             {
