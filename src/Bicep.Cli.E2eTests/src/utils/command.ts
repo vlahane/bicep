@@ -68,12 +68,16 @@ class BicepCommandTestRunner {
   }
 
   private runCommand() {
-    return spawn.sync(bicepCli, this.args, {
+    const result = spawn.sync(bicepCli, this.args, {
       stdio: "pipe",
       encoding: "utf-8",
       // overrides take precedence over inherited env vars
       env: { ...process.env, ...this.envOverrides },
     });
+
+    expect(result).toBeTruthy();
+
+    return result;
   }
 }
 
