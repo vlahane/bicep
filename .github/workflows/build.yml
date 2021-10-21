@@ -139,7 +139,7 @@ jobs:
       CI: true
 
     strategy:
-      fail-fast: true
+      fail-fast: false
 
       matrix:
         include:
