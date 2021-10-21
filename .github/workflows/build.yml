@@ -23,6 +23,8 @@ jobs:
       # disable telemetry (reduces dotnet tool output in logs)
       DOTNET_CLI_TELEMETRY_OPTOUT: true
 
+      CI: true
+
     strategy:
       # let us get failures from other jobs even if one fails
       fail-fast: false
@@ -89,7 +91,6 @@ jobs:
         run: npm ci && npm test
         env:
           BICEP_CLI_EXECUTABLE: ../../../Bicep.Cli/bin/${{ matrix.configuration }}/net5.0/${{ matrix.rid }}/publish/bicep
-          BICEP_REGISTRY_ENABLED_EXPERIMENTAL: true
         working-directory: ./src/Bicep.Cli.E2eTests
 
       - name: Run Bicep E2E Tests (linux-musl-x64)
@@ -100,7 +101,6 @@ jobs:
           args: -c "apk add --update nodejs npm && npm ci --prefix ./src/Bicep.Cli.E2eTests && npm test --prefix ./src/Bicep.Cli.E2eTests"
         env:
           BICEP_CLI_EXECUTABLE: ../../../Bicep.Cli/bin/${{ matrix.configuration }}/net5.0/${{ matrix.rid }}/publish/bicep
-          BICEP_REGISTRY_ENABLED_EXPERIMENTAL: true
       
       - name: Upload Language Server
         uses: actions/upload-artifact@v2

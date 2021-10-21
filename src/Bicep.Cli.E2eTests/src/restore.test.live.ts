@@ -12,7 +12,10 @@ import {
   expectBrModuleStructure,
   publishModule,
 } from "./utils/br";
-import { invokingBicepCommand } from "./utils/command";
+import {
+  invokingBicepCommand,
+  invokingBicepCommandWithEnvOverrides,
+} from "./utils/command";
 import {
   moduleCacheRoot,
   pathToCachedTsModuleFile,
@@ -21,6 +24,10 @@ import {
   expectFileExists,
   writeTempFile,
 } from "./utils/fs";
+import {
+  environments,
+  createEnvironmentOverrides,
+} from "./utils/liveTestEnvironments";
 
 async function emptyModuleCacheRoot() {
   await emptyDir(moduleCacheRoot);
@@ -29,8 +36,9 @@ async function emptyModuleCacheRoot() {
 describe("bicep restore", () => {
   beforeEach(emptyModuleCacheRoot);
 
-  //afterAll(emptyModuleCacheRoot);
+  const testArea = "restore";
 
+  // TODO: Referenced file has direct module refs
   it("should restore template specs", () => {
     const exampleFilePath = pathToExampleFile("external-modules", "main.bicep");
     invokingBicepCommand("restore", exampleFilePath)
@@ -59,15 +67,23 @@ describe("bicep restore", () => {
     );
   });
 
-  it("should restore OCI artifacts", () => {
-    const registry = "biceptestdf.azurecr.io";
-    const builder = new BicepRegistryReferenceBuilder(registry, "restore");
+  it.each(environments)("should restore OCI artifacts (%p)", (environment) => {
+    const builder = new BicepRegistryReferenceBuilder(
+      environment.registryUri,
+      testArea
+    );
 
+    const envOverrides = createEnvironmentOverrides(environment);
     const storageRef = builder.getBicepReference("storage", "v1");
-    publishModule(storageRef, "local-modules", "storage.bicep");
+    publishModule(envOverrides, storageRef, "local-modules", "storage.bicep");
 
     const passthroughRef = builder.getBicepReference("passthrough", "v1");
-    publishModule(passthroughRef, "local-modules", "passthrough.bicep");
+    publishModule(
+      envOverrides,
+      passthroughRef,
+      "local-modules",
+      "passthrough.bicep"
+    );
 
     const bicep = `
 module passthrough '${passthroughRef}' = {
@@ -89,7 +105,7 @@ output blobEndpoint string = storage.outputs.blobEndpoint
     `;
 
     const bicepPath = writeTempFile("restore", "main.bicep", bicep);
-    invokingBicepCommand("restore", bicepPath)
+    invokingBicepCommandWithEnvOverrides(envOverrides, "restore", bicepPath)
       .shouldSucceed()
       .withEmptyStdout();
 

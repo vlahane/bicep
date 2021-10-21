@@ -43,7 +43,10 @@ class StderrAssertionBuilder {
 }
 
 class BicepCommandTestRunner {
-  constructor(private readonly args: string[]) {}
+  constructor(
+    private readonly envOverrides: { [key: string]: string },
+    private readonly args: string[]
+  ) {}
 
   shouldSucceed(): StdoutAssertionBuilder {
     const result = this.runCommand();
@@ -68,7 +71,8 @@ class BicepCommandTestRunner {
     return spawn.sync(bicepCli, this.args, {
       stdio: "pipe",
       encoding: "utf-8",
-      env: { ...process.env },
+      // overrides take precedence over inherited env vars
+      env: { ...process.env, ...this.envOverrides },
     });
   }
 }
@@ -76,5 +80,12 @@ class BicepCommandTestRunner {
 export function invokingBicepCommand(
   ...args: string[]
 ): BicepCommandTestRunner {
-  return new BicepCommandTestRunner(args);
+  return new BicepCommandTestRunner({}, args);
+}
+
+export function invokingBicepCommandWithEnvOverrides(
+  envOverrides: { [key: string]: string },
+  ...args: string[]
+): BicepCommandTestRunner {
+  return new BicepCommandTestRunner(envOverrides, args);
 }

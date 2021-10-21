@@ -12,38 +12,58 @@ import {
   expectBrModuleStructure,
   publishModule,
 } from "./utils/br";
-import { invokingBicepCommand } from "./utils/command";
+import {
+  invokingBicepCommand,
+  invokingBicepCommandWithEnvOverrides,
+} from "./utils/command";
 import { expectFileExists, pathToTempFile, writeTempFile } from "./utils/fs";
+import {
+  createEnvironmentOverrides,
+  environments,
+} from "./utils/liveTestEnvironments";
 
 describe("bicep build", () => {
-  const registry = "biceptestdf.azurecr.io";
+  const testArea = "build";
 
-  it("should fail to build with --no-restore switch if modules are not cached", () => {
-    const bicep = `
-module test 'br:${registry}/does-not-exist:v-never' = {
+  it.each(environments)(
+    "should fail to build with --no-restore switch if modules are not cached (%p)",
+    (environment) => {
+      const bicep = `
+module test 'br:${environment.registryUri}/does-not-exist:v-never' = {
   name: 'test'
 }
     `;
 
-    const bicepPath = writeTempFile("build", "no-restore.bicep", bicep);
-    invokingBicepCommand("build", bicepPath, "--no-restore")
-      .shouldFail()
-      .withStderr(
-        /.+BCP190: The module with reference "br:biceptestdf.azurecr.io\/does-not-exist:v-never" has not been restored..*/
+      const bicepPath = writeTempFile("build", "no-restore.bicep", bicep);
+      invokingBicepCommand("build", bicepPath, "--no-restore")
+        .shouldFail()
+        .withStderr(
+          /.+BCP190: The module with reference "br:biceptestdf.azurecr.io\/does-not-exist:v-never" has not been restored..*/
+        );
+    }
+  );
+
+  it.each(environments)(
+    "should build file with external modules (%p)",
+    (environment) => {
+      const builder = new BicepRegistryReferenceBuilder(
+        environment.registryUri,
+        testArea
       );
-  });
 
-  it("should build file with external modules", () => {
-    const registry = "biceptestdf.azurecr.io";
-    const builder = new BicepRegistryReferenceBuilder(registry, "build");
+      const envOverrides = createEnvironmentOverrides(environment);
+      const storageRef = builder.getBicepReference("storage", "v1");
+      publishModule(envOverrides, storageRef, "local-modules", "storage.bicep");
 
-    const storageRef = builder.getBicepReference("storage", "v1");
-    publishModule(storageRef, "local-modules", "storage.bicep");
+      const passthroughRef = builder.getBicepReference("passthrough", "v1");
+      publishModule(
+        envOverrides,
+        passthroughRef,
+        "local-modules",
+        "passthrough.bicep"
+      );
 
-    const passthroughRef = builder.getBicepReference("passthrough", "v1");
-    publishModule(passthroughRef, "local-modules", "passthrough.bicep");
-
-    const bicep = `
+      const bicep = `
 module passthrough '${passthroughRef}' = {
   name: 'passthrough'
   params: {
@@ -62,21 +82,24 @@ module storage '${storageRef}' = {
 output blobEndpoint string = storage.outputs.blobEndpoint
     `;
 
-    const bicepPath = writeTempFile("build", "build-external.bicep", bicep);
-    invokingBicepCommand("build", bicepPath).shouldSucceed().withEmptyStdout();
+      const bicepPath = writeTempFile("build", "build-external.bicep", bicep);
+      invokingBicepCommandWithEnvOverrides(envOverrides, "build", bicepPath)
+        .shouldSucceed()
+        .withEmptyStdout();
 
-    expectFileExists(pathToTempFile("build", "build-external.json"));
+      expectFileExists(pathToTempFile("build", "build-external.json"));
 
-    expectBrModuleStructure(
-      builder.registry,
-      "build$passthrough",
-      `v1_${builder.tagSuffix}$4002000`
-    );
+      expectBrModuleStructure(
+        builder.registry,
+        "build$passthrough",
+        `v1_${builder.tagSuffix}$4002000`
+      );
 
-    expectBrModuleStructure(
-      builder.registry,
-      "build$storage",
-      `v1_${builder.tagSuffix}$4002000`
-    );
-  });
+      expectBrModuleStructure(
+        builder.registry,
+        "build$storage",
+        `v1_${builder.tagSuffix}$4002000`
+      );
+    }
+  );
 });
