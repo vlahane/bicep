@@ -77,7 +77,7 @@ class BicepCommandTestRunner {
     });
 
     expect(result).toBeTruthy();
-    if (!result.status) {
+    if (result.status == null) {
       throw new Error(
         `Process terminated prematurely. Signal = ${
           result.signal ?? "<MISSING>"
