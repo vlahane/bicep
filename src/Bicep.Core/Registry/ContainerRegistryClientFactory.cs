@@ -24,8 +24,8 @@ namespace Bicep.Core.Registry
             var options = new ContainerRegistryClientOptions();
             options.Diagnostics.ApplySharedContainerRegistrySettings();
 
-            // TODO: Fix national clouds (this is now an Audience setting)
-            // options.AuthenticationScope = configuration.Cloud.AuthenticationScope;
+            // TODO: Fix national clouds
+            options.Audience = ContainerRegistryAudience.AzureResourceManagerPublicCloud;
 
             var credential = this.credentialFactory.CreateChain(configuration.Cloud.CredentialPrecedence, configuration.Cloud.ActiveDirectoryAuthorityUri);
 
