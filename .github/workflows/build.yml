@@ -174,15 +174,25 @@ jobs:
         with:
           name: bicep-release-${{ matrix.rid }}
           path: ./src/Bicep.Cli.E2eTests/src/temp/bicep-cli
+      
+      - name: List files
+        run: ls ./src/Bicep.Cli.E2eTests/src/temp/bicep-cli
 
       - name: Run Bicep E2E Tests
+        if: ${{ matrix.rid != 'linux-musl-x64' }}
+        run: npm ci && npm test
+        env:
+          BICEP_CLI_EXECUTABLE: ../../../Bicep.Cli.E2eTests/src/temp/bicep-cli/bicep
+        working-directory: ./src/Bicep.Cli.E2eTests
+
+      - name: Run Bicep Live E2E Tests
         if: ${{ matrix.rid != 'linux-musl-x64' }}
         run: npm ci && npm run test:live
         env:
           BICEP_CLI_EXECUTABLE: ../../../Bicep.Cli.E2eTests/src/temp/bicep-cli/bicep
         working-directory: ./src/Bicep.Cli.E2eTests
 
-      - name: Run Bicep E2E Tests (linux-musl-x64)
+      - name: Run Bicep Live E2E Tests (linux-musl-x64)
         if: ${{ matrix.rid == 'linux-musl-x64' }}
         uses: docker://mcr.microsoft.com/azure-cli:latest
         with:
