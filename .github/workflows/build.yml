@@ -137,6 +137,8 @@ jobs:
 
     env:
       CI: true
+      BICEP_SPN_PASSWORD: ${{ secrets.BICEP_SPN_PASSWORD }}
+      BICEP_SPN_PASSWORD_FF: ${{ secrets.BICEP_SPN_PASSWORD_FF }}
 
     strategy:
       fail-fast: false
