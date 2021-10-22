@@ -4,7 +4,7 @@
     "credentialPrecedence": [
       // used by CI
       "Environment",
-      "AzurePowerShell"
+      "AzureCLI"
     ]
   },
   "moduleAliases": {
