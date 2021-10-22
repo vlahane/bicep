@@ -4,7 +4,7 @@
 /* eslint-disable jest/no-standalone-expect */
 import spawn from "cross-spawn";
 
-import { bicepCli, expectFileExists } from "./fs";
+import { bicepCli } from "./fs";
 
 class StdoutAssertionBuilder {
   constructor(private readonly stdout: string) {}
@@ -68,6 +68,7 @@ class BicepCommandTestRunner {
   }
 
   private runCommand() {
+    console.log(`Bicep CLI = ${bicepCli}`);
     const result = spawn.sync(bicepCli, this.args, {
       stdio: "pipe",
       encoding: "utf-8",
@@ -75,8 +76,14 @@ class BicepCommandTestRunner {
       env: { ...process.env, ...this.envOverrides },
     });
 
-    console.log(`Bicep CLI = ${bicepCli}`);
-    expectFileExists(bicepCli);
+    expect(result).toBeTruthy();
+    if (!result.status) {
+      throw new Error(
+        `Process terminated prematurely. Signal = ${
+          result.signal ?? "<MISSING>"
+        }`
+      );
+    }
 
     return result;
   }
