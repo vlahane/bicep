@@ -75,7 +75,7 @@ class BicepCommandTestRunner {
       env: { ...process.env, ...this.envOverrides },
     });
 
-    expect(result).toBeTruthy();
+    console.log(`Bicep CLI = ${bicepCli}`);
 
     return result;
   }
