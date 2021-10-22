@@ -4,7 +4,7 @@
 /* eslint-disable jest/no-standalone-expect */
 import spawn from "cross-spawn";
 
-import { bicepCli } from "./fs";
+import { bicepCli, expectFileExists } from "./fs";
 
 class StdoutAssertionBuilder {
   constructor(private readonly stdout: string) {}
@@ -76,6 +76,7 @@ class BicepCommandTestRunner {
     });
 
     console.log(`Bicep CLI = ${bicepCli}`);
+    expectFileExists(bicepCli);
 
     return result;
   }
