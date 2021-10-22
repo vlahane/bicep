@@ -3,8 +3,7 @@
     "currentProfile": "AzureUSGovernment",
     "credentialPrecedence": [
       // used by CI
-      "Environment",
-      "AzureCLI"
+      "Environment"
     ]
   },
   "moduleAliases": {
