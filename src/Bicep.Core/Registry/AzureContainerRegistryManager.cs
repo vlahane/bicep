@@ -94,25 +94,18 @@ namespace Bicep.Core.Registry
 
             // the SDK doesn't expose all the manifest properties we need
             // so we need to deserialize the manifest ourselves to get everything
-            var stream = GetManifestStream(manifestResponse);
+            var stream = manifestResponse.Value.ManifestStream;
+            stream.Position = 0;
             var deserialized = DeserializeManifest(stream);
-            stream.Position= 0;
-
-            return (deserialized, stream, manifestResponse.Value.Digest);
-        }
-
-        private static Stream GetManifestStream(Response<DownloadManifestResult> manifestResponse)
-        {
-            var stream = manifestResponse.GetRawResponse().ContentStream ?? throw new InvalidModuleException("Unexpected null manifest content stream");
             stream.Position = 0;
 
-            return stream;
+            return (deserialized, stream, manifestResponse.Value.Digest);
         }
 
         private static void ValidateManifestResponse(Response<DownloadManifestResult> manifestResponse)
         {
             var digestFromRegistry = manifestResponse.Value.Digest;
-            var stream = GetManifestStream(manifestResponse);
+            var stream = manifestResponse.Value.ManifestStream;
 
             // TODO: The registry may use a different digest algorithm - we need to handle that
             string digestFromContent = DescriptorFactory.ComputeDigest(DescriptorFactory.AlgorithmIdentifierSha256, stream);
